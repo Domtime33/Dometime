@@ -1,4 +1,4 @@
 streamlit
-pip install mediapipe opencv-python
-numpy
+opencv-python-headless
 pillow
+numpy
