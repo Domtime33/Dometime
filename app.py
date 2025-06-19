@@ -2,18 +2,21 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
-import face_recognition
 
-st.title("Comic Book Face Swap (Styled, Cloud-Compatible)")
+st.title("Comic Book Face Swap (OpenCV Version)")
 
 uploaded_comic = st.file_uploader("Upload a comic book cover (JPG/PNG)", type=["jpg", "jpeg", "png"], key="comic")
 uploaded_face = st.file_uploader("Upload your face (selfie)", type=["jpg", "jpeg", "png"], key="face")
 
-def detect_face_fr(image):
-    face_locations = face_recognition.face_locations(image)
-    if face_locations:
-        top, right, bottom, left = face_locations[0]
-        return left, top, right - left, bottom - top
+# Load OpenCV's pre-trained Haar Cascade face detector
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+def detect_face_opencv(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+    if len(faces) > 0:
+        x, y, w, h = faces[0]
+        return x, y, w, h
     else:
         return None
 
@@ -35,8 +38,8 @@ if uploaded_comic and uploaded_face:
     comic_np = np.array(comic_img)
     face_np = np.array(face_img)
 
-    comic_face = detect_face_fr(comic_np)
-    user_face = detect_face_fr(face_np)
+    comic_face = detect_face_opencv(comic_np)
+    user_face = detect_face_opencv(face_np)
 
     if not comic_face:
         st.error("No face detected on comic cover.")
