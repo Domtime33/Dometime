@@ -2,21 +2,18 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
-import dlib
+import face_recognition
 
-st.title("Comic Book Face Swap (Styled, Cloud-Friendly)")
+st.title("Comic Book Face Swap (Styled, Cloud-Compatible)")
 
 uploaded_comic = st.file_uploader("Upload a comic book cover (JPG/PNG)", type=["jpg", "jpeg", "png"], key="comic")
 uploaded_face = st.file_uploader("Upload your face (selfie)", type=["jpg", "jpeg", "png"], key="face")
 
-detector = dlib.get_frontal_face_detector()
-
-def detect_face_dlib(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    faces = detector(gray)
-    if faces:
-        face = faces[0]
-        return face.left(), face.top(), face.width(), face.height()
+def detect_face_fr(image):
+    face_locations = face_recognition.face_locations(image)
+    if face_locations:
+        top, right, bottom, left = face_locations[0]
+        return left, top, right - left, bottom - top
     else:
         return None
 
@@ -38,8 +35,8 @@ if uploaded_comic and uploaded_face:
     comic_np = np.array(comic_img)
     face_np = np.array(face_img)
 
-    comic_face = detect_face_dlib(comic_np)
-    user_face = detect_face_dlib(face_np)
+    comic_face = detect_face_fr(comic_np)
+    user_face = detect_face_fr(face_np)
 
     if not comic_face:
         st.error("No face detected on comic cover.")
