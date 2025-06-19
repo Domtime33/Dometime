@@ -1,25 +1,24 @@
 import streamlit as st
 import cv2
-import mediapipe as mp
 import numpy as np
 from PIL import Image
+import dlib
 
-st.title("Comic Book Face Swap (Styled)")
+st.title("Comic Book Face Swap (Styled, Cloud-Friendly)")
 
 uploaded_comic = st.file_uploader("Upload a comic book cover (JPG/PNG)", type=["jpg", "jpeg", "png"], key="comic")
 uploaded_face = st.file_uploader("Upload your face (selfie)", type=["jpg", "jpeg", "png"], key="face")
 
-def detect_face_mediapipe(image):
-    mp_face_detection = mp.solutions.face_detection
-    with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
-        results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-        if results.detections:
-            box = results.detections[0].location_data.relative_bounding_box
-            h, w, _ = image.shape
-            x, y, w_box, h_box = int(box.xmin * w), int(box.ymin * h), int(box.width * w), int(box.height * h)
-            return x, y, w_box, h_box
-        else:
-            return None
+detector = dlib.get_frontal_face_detector()
+
+def detect_face_dlib(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    faces = detector(gray)
+    if faces:
+        face = faces[0]
+        return face.left(), face.top(), face.width(), face.height()
+    else:
+        return None
 
 def apply_comic_filter(img):
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -39,8 +38,8 @@ if uploaded_comic and uploaded_face:
     comic_np = np.array(comic_img)
     face_np = np.array(face_img)
 
-    comic_face = detect_face_mediapipe(comic_np)
-    user_face = detect_face_mediapipe(face_np)
+    comic_face = detect_face_dlib(comic_np)
+    user_face = detect_face_dlib(face_np)
 
     if not comic_face:
         st.error("No face detected on comic cover.")
