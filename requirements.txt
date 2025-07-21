@@ -1,4 +1,6 @@
-streamlit
-opencv-python
-numpy
+streamlit==1.34.0
+opencv-python-headless==4.9.0.80
 Pillow
+numpy
+requests
+python-dotenv
