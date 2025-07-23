@@ -1,5 +1,6 @@
-streamlit
+streamlit==1.x
 opencv-python-headless
+supabase
+sendgrid  # if using email
 numpy
 Pillow
-requests
