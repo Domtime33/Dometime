@@ -2,21 +2,23 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+from io import BytesIO
 
-st.title("Comic Book Face Swap (OpenCV Version)")
+st.title("🦸 Comic Book Face Swap (OpenCV Edition)")
 
-uploaded_comic = st.file_uploader("Upload a comic book cover (JPG/PNG)", type=["jpg", "jpeg", "png"], key="comic")
-uploaded_face = st.file_uploader("Upload your face (selfie)", type=["jpg", "jpeg", "png"], key="face")
+uploaded_comic = st.file_uploader("📕 Upload a comic book cover (JPG/PNG)", type=["jpg", "jpeg", "png"], key="comic")
+uploaded_face = st.file_uploader("🤳 Upload your selfie", type=["jpg", "jpeg", "png"], key="face")
 
-# Load OpenCV's pre-trained Haar Cascade face detector
+# Load face detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 def detect_face_opencv(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
     if len(faces) > 0:
-        x, y, w, h = faces[0]
-        return x, y, w, h
+        # Return the largest face detected
+        biggest_face = max(faces, key=lambda r: r[2]*r[3])
+        return biggest_face
     else:
         return None
 
@@ -42,9 +44,9 @@ if uploaded_comic and uploaded_face:
     user_face = detect_face_opencv(face_np)
 
     if not comic_face:
-        st.error("No face detected on comic cover.")
+        st.error("😢 No face detected on the comic book cover.")
     elif not user_face:
-        st.error("No face detected in selfie.")
+        st.error("😢 No face detected in your selfie.")
     else:
         x_c, y_c, w_c, h_c = comic_face
         x_u, y_u, w_u, h_u = user_face
@@ -56,9 +58,20 @@ if uploaded_comic and uploaded_face:
         result_img = comic_np.copy()
         result_img[y_c:y_c+h_c, x_c:x_c+w_c] = face_resized
 
-        st.image(result_img, caption="Face-swapped Comic", use_column_width=True)
+        st.image(result_img, caption="✅ Face-swapped Comic", use_column_width=True)
+
+        # Debug previews
+        with st.expander("🔍 Debug: Preview Cropped Faces"):
+            st.image(face_crop, caption="Cropped Selfie Face", channels="RGB")
+            st.image(face_resized, caption="Cartoonized + Resized Face", channels="RGB")
+
+        # Convert to BytesIO for download
         result_pil = Image.fromarray(result_img)
-        st.download_button("Download Your Comic Cover", data=result_pil.tobytes(), file_name="comic_face_swap.png", mime="image/png")
+        buf = BytesIO()
+        result_pil.save(buf, format="PNG")
+        byte_im = buf.getvalue()
+
+        st.download_button("⬇️ Download Your Comic Cover", data=byte_im, file_name="comic_face_swap.png", mime="image/png")
 
 else:
-    st.info("Please upload both a comic book cover and your selfie to continue.")
+    st.info("📂 Please upload both a comic book cover and your selfie to get started.")
